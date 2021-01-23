@@ -2,7 +2,10 @@
 #include "WiFi.h"
 #include "Adafruit_MQTT.h"
 #include "Adafruit_MQTT_Client.h"
+
 #include "credentials.h"
+#include "global.h"
+#include "HelperTasks.h"
 
 #define ARDUINO_MAIN_CORE 0
 #define ARDUINO_TASK_CORE 1
@@ -21,26 +24,6 @@
 #define MQTT_KEY         "YOUR_MQTT_BROKER_PASSWORD"
 
 #endif
-
-/************ Global State (you don't need to change this!) ******************/
-
-// Create an WiFiClient class to connect to the MQTT server.
-WiFiClient client;
-
-// Setup the MQTT client class by passing in the WiFi client and MQTT server and login details.
-Adafruit_MQTT_Client mqtt(&client, MQTT_SERVER, MQTT_SERVERPORT, MQTT_USERNAME, MQTT_USERNAME, MQTT_KEY);
-
-/****************************** Feeds ***************************************/
-
-// Notice MQTT paths for MQTT follow the form: <username>/feeds/<feedname>
-Adafruit_MQTT_Subscribe commands_sub = Adafruit_MQTT_Subscribe(&mqtt, "waterbox/W0001/commands"); // used to retrieve actions that is needed to be done by Waterbox
-Adafruit_MQTT_Subscribe temp_sensor_sub = Adafruit_MQTT_Subscribe(&mqtt, "waterbox/W0001/temp_sensor");
-Adafruit_MQTT_Subscribe flow_sensor_sub = Adafruit_MQTT_Subscribe(&mqtt, "waterbox/W0001/flow_sensor");
-Adafruit_MQTT_Subscribe test_sub = Adafruit_MQTT_Subscribe(&mqtt, "waterbox/W0001/test");
-
-Adafruit_MQTT_Publish temp_sensor_pub = Adafruit_MQTT_Publish(&mqtt, "waterbox/W0001/temp_sensor");
-Adafruit_MQTT_Publish flow_sensor_pub = Adafruit_MQTT_Publish(&mqtt, "waterbox/W0001/flow_sensor");
-Adafruit_MQTT_Publish test_pub = Adafruit_MQTT_Publish(&mqtt, "waterbox/W0001/test");
 
 /*************************** Sketch Code ************************************/
 
@@ -66,8 +49,6 @@ void setup() {
   Serial.println(F("Waterbox Setup Complete."));
 }
 
-uint32_t x=0;
-
 void loop() {
   // Ensure the connection to the MQTT server is alive
   MQTT_connect();
@@ -80,84 +61,6 @@ void loop() {
     mqtt.disconnect();
   }
 
-}
-
-void TaskTestPublish(void *pvParameters) {
-  // test publish
-  (void) pvParameters;
-  int count = 0;
-  
-  for(;;) {
-    if (mqtt.connected()) {      
-      count++;
-      // Publish
-      if (!test_pub.publish(count))
-        Serial.println(F("Publish Failed."));
-      else {
-        Serial.print(F("Test Publish Success! Published: "));
-        Serial.println(count);
-        vTaskDelay(500);
-      }
-      vTaskDelay(1000);
-    } else {
-      Serial.println("Publish Failed! Not Connected to MQTT");
-      vTaskDelay(1000);
-    }
-  }
-}
-
-void TaskFlowPublish(void *pvParameters) {
-  (void) pvParameters;
-  int flow_read = 0;
-  int flow_read_old = flow_read; // change this to use a pointer instead
-  
-  for(;;) {
-    // read flow here
-    // flow_read = read_flow_sensor();
-    
-    // if there is new data, publish
-    if (flow_read != flow_read_old) {
-      flow_read_old = flow_read;
-      
-      if (mqtt.connected()) {
-        if (!flow_sensor_pub.publish(flow_read))
-          Serial.println(F("Publish Failed."));
-        else {
-          Serial.print(F("Flow Publish Success! Published: "));
-          Serial.println(flow_read);
-        }
-      } else {
-        Serial.println("Publish Flow Failed! Not Connected to MQTT");
-      }
-    }
-  }
-}
-
-void TaskTempPublish(void *pvParameters) {
-  (void) pvParameters;
-  int temp_read = 0;
-  int temp_read_old = temp_read; // change this to use a pointer instead
-  
-  for(;;) {
-    // read flow here
-    // flow_read = read_flow_sensor();
-    
-    // if there is new data, publish
-    if (temp_read != temp_read_old) {
-      temp_read_old = temp_read;
-      
-      if (mqtt.connected()) {
-        if (!temp_sensor_pub.publish(temp_read))
-          Serial.println(F("Publish Failed."));
-        else {
-          Serial.print(F("Temp Publish Success! Published: "));
-          Serial.println(temp_read);
-        }
-      } else {
-        Serial.println("Publish Temp Failed! Not Connected to MQTT");
-      }
-    }
-  }
 }
 
 void setupMQTT() {
