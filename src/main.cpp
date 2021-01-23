@@ -6,6 +6,7 @@
 #include "credentials.h"
 #include "global.h"
 #include "HelperTasks.h"
+#include <HardwareSerial.h>
 
 #define ARDUINO_MAIN_CORE 0
 #define ARDUINO_TASK_CORE 1
@@ -27,15 +28,22 @@
 
 /*************************** Sketch Code ************************************/
 
+HardwareSerial ArduinoSerial(2); // RX, TX
+
 void setupWifi();
 void setupMQTT();
 void MQTT_connect();
 
+void sendArduino(String);
+void listenArduino();
+void processCommandArduino(String);
+void echo();
 void getMQTTMessages();
 void TaskTestPublish(void *pvParameters);
 
 void setup() {
-  Serial.begin(115200);
+  Serial.begin(9600);
+  ArduinoSerial.begin(9600);
   delay(10);
 
   Serial.println(F("Waterbox Initialize..."));
@@ -53,14 +61,60 @@ void loop() {
   // Ensure the connection to the MQTT server is alive
   MQTT_connect();
 
-  // Get messages from subscribed topics
-  getMQTTMessages();
+  if (mqtt.connected()) {
+    // Get messages from subscribed topics
+    getMQTTMessages();
+  }
+
+  echo();
+  listenArduino();
 
   // ping the server to keep the mqtt connection alive
   if(!mqtt.ping()) {
     mqtt.disconnect();
   }
+}
 
+void echo() {
+  if(Serial.available()) {
+    String str = Serial.readStringUntil('\n');
+    Serial.println(str);
+    sendArduino(str);
+    delay(10);
+  }
+}
+
+void listenArduino() {
+  if(ArduinoSerial.available()) {
+    String str = ArduinoSerial.readStringUntil('\n');
+    Serial.println(str);
+    processCommandArduino(str);
+    delay(10);
+  }
+}
+
+void processCommandArduino(String str) {
+  String command, topicFull, topic, message;
+  int separatorPos = str.indexOf(":");
+  if (separatorPos > -1) {
+    command = str.substring(0,separatorPos);
+    if (command == "pub") {
+      topicFull = str.substring(separatorPos+1, str.indexOf(":",separatorPos+1));
+      topic = topicFull.substring(topicFull.indexOf("/",10)+1);
+      separatorPos = str.indexOf(":",separatorPos+1);
+      if (topic == "flow_sensor") {
+        message = str.substring(separatorPos+1);
+        flow_sensor_pub.publish(message.toFloat());
+      }
+    }
+  }
+  Serial.println(command);
+  Serial.println(topic);
+  Serial.println(message);
+}
+
+void sendArduino(String str) {
+  ArduinoSerial.println(str);
 }
 
 void setupMQTT() {
@@ -69,35 +123,35 @@ void setupMQTT() {
   mqtt.subscribe(&flow_sensor_sub);
   mqtt.subscribe(&test_sub);
 
-  xTaskCreatePinnedToCore(
-    TaskTestPublish
-    ,  "TaskTestPublish"   // A name just for humans
-    ,  1024  // This stack size can be checked & adjusted by reading the Stack Highwater
-    ,  NULL
-    ,  0  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-    ,  NULL
-    ,  ARDUINO_TASK_CORE
-  );  
+  // xTaskCreatePinnedToCore(
+  //   TaskTestPublish
+  //   ,  "TaskTestPublish"   // A name just for humans
+  //   ,  1024  // This stack size can be checked & adjusted by reading the Stack Highwater
+  //   ,  NULL
+  //   ,  0  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+  //   ,  NULL
+  //   ,  ARDUINO_TASK_CORE
+  // );  
 
-  xTaskCreatePinnedToCore(
-    TaskTempPublish
-    ,  "TaskTempPublish"   // A name just for humans
-    ,  1024  // This stack size can be checked & adjusted by reading the Stack Highwater
-    ,  NULL
-    ,  0  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-    ,  NULL
-    ,  ARDUINO_TASK_CORE
-  );  
+  // xTaskCreatePinnedToCore(
+  //   TaskTempPublish
+  //   ,  "TaskTempPublish"   // A name just for humans
+  //   ,  1024  // This stack size can be checked & adjusted by reading the Stack Highwater
+  //   ,  NULL
+  //   ,  0  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+  //   ,  NULL
+  //   ,  ARDUINO_TASK_CORE
+  // );  
 
-  xTaskCreatePinnedToCore(
-    TaskFlowPublish
-    ,  "TaskFlowPublish"   // A name just for humans
-    ,  1024  // This stack size can be checked & adjusted by reading the Stack Highwater
-    ,  NULL
-    ,  0  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-    ,  NULL
-    ,  ARDUINO_TASK_CORE
-  );  
+  // xTaskCreatePinnedToCore(
+  //   TaskFlowPublish
+  //   ,  "TaskFlowPublish"   // A name just for humans
+  //   ,  1024  // This stack size can be checked & adjusted by reading the Stack Highwater
+  //   ,  NULL
+  //   ,  0  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+  //   ,  NULL
+  //   ,  ARDUINO_TASK_CORE
+  // );  
 }
 
 void getMQTTMessages() {
