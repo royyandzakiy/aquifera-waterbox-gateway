@@ -94,6 +94,9 @@ void listenArduino() {
 }
 
 void processCommandArduino(String str) {
+  /**
+   * pub
+  */
   String command, topicFull, topic, message;
   int separatorPos = str.indexOf(":");
   if (separatorPos > -1) {
@@ -111,6 +114,10 @@ void processCommandArduino(String str) {
   Serial.println(command);
   Serial.println(topic);
   Serial.println(message);
+}
+
+void commandArduino() {
+  
 }
 
 void sendArduino(String str) {
