@@ -7,9 +7,13 @@
 #include "global.h"
 #include "HelperTasks.h"
 #include <HardwareSerial.h>
+#include <dht.h>
 
 #define ARDUINO_MAIN_CORE 0
 #define ARDUINO_TASK_CORE 1
+#define DHT11_PIN 7
+
+dht DHT;
 
 #ifndef CREDENTIALS_H
 /************************* WiFi Access Point *********************************/

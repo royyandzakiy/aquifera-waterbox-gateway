@@ -1,7 +1,6 @@
 void extractCommandArduino(String);
 void commandArduino(String, String, String);
 void TaskTestPublish(void *pvParameters);
-void TaskFlowPublish(void *pvParameters);
 void TaskTempPublish(void *pvParameters);
 
 void TaskTestPublish(void *pvParameters) {
@@ -30,46 +29,12 @@ void TaskTestPublish(void *pvParameters) {
   }
 }
 
-void TaskFlowPublish(void *pvParameters) {
-  (void) pvParameters;
-  int flow_read = 0;
-  int flow_read_old = flow_read; // change this to use a pointer instead
-  
-  for(;;) {
-    // read flow here
-    // flow_read = read_flow_sensor();
-    
-    // if there is new data, publish
-    if (flow_read != flow_read_old) {
-      flow_read_old = flow_read;
-      
-      if (mqtt.connected()) {
-        if (!flow_sensor_pub.publish(flow_read))
-          Serial.println(F("Publish Failed."));
-        else {
-          Serial.print(F("Flow Publish Success! Published: "));
-          Serial.println(flow_read);
-        }
-      } else {
-        // Serial.println("Publish Flow Failed! Not Connected to MQTT");
-      }
-    }
-  }
-}
-
 void TaskTempPublish(void *pvParameters) {
   (void) pvParameters;
-  int temp_read = 0;
-  int temp_read_old = temp_read; // change this to use a pointer instead
   
   for(;;) {
-    // read flow here
-    // flow_read = read_flow_sensor();
-    
-    // if there is new data, publish
-    if (temp_read != temp_read_old) {
-      temp_read_old = temp_read;
-      
+      int temp_read = DHT.read11(DHT11_PIN);
+      Serial.println("Temp: " + String(temp_read));
       if (mqtt.connected()) {
         if (!temp_sensor_pub.publish(temp_read))
           Serial.println(F("Publish Failed."));
@@ -77,8 +42,10 @@ void TaskTempPublish(void *pvParameters) {
           Serial.print(F("Temp Publish Success! Published: "));
           Serial.println(temp_read);
         }
+        vTaskDelay(3000);
       } else {
-        Serial.println("Publish Temp Failed! Not Connected to MQTT");
+        // Serial.println("Publish Temp Failed! Not Connected to MQTT");
+        vTaskDelay(3000);
       }
     }
   }
