@@ -36,10 +36,13 @@ void MQTT_connect();
 
 void sendArduino(String);
 void listenArduino();
-void processCommandArduino(String);
+void extractCommandArduino(String);
+void commandArduino(String, String, String);
 void echo();
 void getMQTTMessages();
 void TaskTestPublish(void *pvParameters);
+void TaskFlowPublish(void *pvParameters);
+void TaskTempPublish(void *pvParameters);
 
 void setup() {
   Serial.begin(9600);
@@ -88,36 +91,9 @@ void listenArduino() {
   if(ArduinoSerial.available()) {
     String str = ArduinoSerial.readStringUntil('\n');
     Serial.println(str);
-    processCommandArduino(str);
+    extractCommandArduino(str);
     delay(10);
   }
-}
-
-void processCommandArduino(String str) {
-  /**
-   * pub
-  */
-  String command, topicFull, topic, message;
-  int separatorPos = str.indexOf(":");
-  if (separatorPos > -1) {
-    command = str.substring(0,separatorPos);
-    if (command == "pub") {
-      topicFull = str.substring(separatorPos+1, str.indexOf(":",separatorPos+1));
-      topic = topicFull.substring(topicFull.indexOf("/",10)+1);
-      separatorPos = str.indexOf(":",separatorPos+1);
-      if (topic == "flow_sensor") {
-        message = str.substring(separatorPos+1);
-        flow_sensor_pub.publish(message.toFloat());
-      }
-    }
-  }
-  Serial.println(command);
-  Serial.println(topic);
-  Serial.println(message);
-}
-
-void commandArduino() {
-  
 }
 
 void sendArduino(String str) {
@@ -128,7 +104,7 @@ void setupMQTT() {
   Serial.println(F("MQTT Setup..."));
   mqtt.subscribe(&temp_sensor_sub);
   mqtt.subscribe(&flow_sensor_sub);
-  mqtt.subscribe(&test_sub);
+  // mqtt.subscribe(&test_sub);
 
   // xTaskCreatePinnedToCore(
   //   TaskTestPublish
@@ -213,9 +189,9 @@ void MQTT_connect() {
   uint8_t retries = 3;
   while ((ret = mqtt.connect()) != 0) { // connect will return 0 for connected
        Serial.println(mqtt.connectErrorString(ret));
-       Serial.println("Retrying MQTT connection in 5 seconds...");
+       Serial.println("Retrying MQTT connection in 2 seconds...");
        mqtt.disconnect();
-       delay(5000);  // wait 5 seconds
+       delay(2000);  // wait 5 seconds
        retries--;
        if (retries == 0) {
          // basically die and wait for WDT to reset me
