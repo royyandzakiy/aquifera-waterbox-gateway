@@ -1,3 +1,8 @@
+#include <DHT.h>
+#define DHTPIN 4
+#define DHTTYPE DHT11
+DHT dht(DHTPIN, DHTTYPE);
+
 void extractCommandArduino(String);
 void commandArduino(String, String, String);
 void TaskTestPublish(void *pvParameters);
@@ -12,20 +17,14 @@ void TaskTestPublish(void *pvParameters) {
     if (mqtt.connected()) {      
       count++;
       // Publish
-      if (!test_pub.publish(count))
-        Serial.println(F("Publish Failed."));
-      else {
-        // Serial.print(F("Test Publish Success! Published: "));
-        String str = "pub:waterbox/W0001/test:" + String(count);
-        Serial.println(str);
-        extractCommandArduino(str);
-        vTaskDelay(500);
-      }
-      vTaskDelay(1000);
+      // Serial.print(F("Test Publish Success! Published: "));
+      String str = "pub:waterbox/W0001/test:" + String(count);
+      Serial.println(str);
+      extractCommandArduino(str);
     } else {
       // Serial.println("Publish Failed! Not Connected to MQTT");
-      vTaskDelay(1000);
     }
+    vTaskDelay(5000);
   }
 }
 
@@ -33,21 +32,25 @@ void TaskTempPublish(void *pvParameters) {
   (void) pvParameters;
   
   for(;;) {
-      int temp_read = DHT.read11(DHT11_PIN);
-      Serial.println("Temp: " + String(temp_read));
-      if (mqtt.connected()) {
-        if (!temp_sensor_pub.publish(temp_read))
-          Serial.println(F("Publish Failed."));
-        else {
-          Serial.print(F("Temp Publish Success! Published: "));
-          Serial.println(temp_read);
-        }
-        vTaskDelay(3000);
-      } else {
-        // Serial.println("Publish Temp Failed! Not Connected to MQTT");
-        vTaskDelay(3000);
-      }
+    float temp_read = dht.readTemperature();
+    float hum_read = dht.readHumidity();
+    if (isnan(temp_read) || isnan(hum_read)) {
+      Serial.println(F("Failed to read from DHT sensor!"));
+    } else {
+      Serial.println("Temp: " + String(temp_read) + "; Hum: " + String(hum_read));
     }
+    if (false) {
+    // if (mqtt.connected()) {
+      if (!temp_sensor_pub.publish(temp_read))
+        Serial.println(F("Publish Failed."));
+      else {
+        Serial.print(F("Temp Publish Success! Published: "));
+        Serial.println(temp_read);
+      }
+    } else {
+      // Serial.println("Publish Temp Failed! Not Connected to MQTT");
+    }
+    vTaskDelay(3000);
   }
 }
 
@@ -85,10 +88,11 @@ void commandArduino(String command, String topic, String message) {
   if (command == "pub") {
     if (topic == "flow_sensor") {
       flow_sensor_pub.publish(message.toFloat());
-    } else if ("temp_sensor") {
+    } else if (topic == "temp_sensor") {
       temp_sensor_pub.publish(message.toFloat());
-    } else if ("test") {
-      test_pub.publish(message.toFloat());
+    } else if (topic == "test") {
+      int messageInt = message.toInt();
+      test_pub.publish(messageInt);
     } else {
       Serial.println("topic error");
     } 

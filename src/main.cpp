@@ -5,15 +5,12 @@
 
 #include "credentials.h"
 #include "global.h"
-#include "HelperTasks.h"
 #include <HardwareSerial.h>
-#include <dht.h>
+#include <Adafruit_Sensor.h>
+#include "HelperTasks.h"
 
 #define ARDUINO_MAIN_CORE 0
 #define ARDUINO_TASK_CORE 1
-#define DHT11_PIN 7
-
-dht DHT;
 
 #ifndef CREDENTIALS_H
 /************************* WiFi Access Point *********************************/
@@ -51,6 +48,7 @@ void TaskTempPublish(void *pvParameters);
 void setup() {
   Serial.begin(9600);
   ArduinoSerial.begin(9600);
+  dht.begin();
   delay(10);
 
   Serial.println(F("Waterbox Initialize..."));
@@ -110,30 +108,20 @@ void setupMQTT() {
   mqtt.subscribe(&flow_sensor_sub);
   // mqtt.subscribe(&test_sub);
 
-  // xTaskCreatePinnedToCore(
-  //   TaskTestPublish
-  //   ,  "TaskTestPublish"   // A name just for humans
-  //   ,  1024  // This stack size can be checked & adjusted by reading the Stack Highwater
-  //   ,  NULL
-  //   ,  0  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-  //   ,  NULL
-  //   ,  ARDUINO_TASK_CORE
-  // );  
+  xTaskCreatePinnedToCore(
+    TaskTestPublish
+    ,  "TaskTestPublish"   // A name just for humans
+    ,  2048  // This stack size can be checked & adjusted by reading the Stack Highwater
+    ,  NULL
+    ,  0  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+    ,  NULL
+    ,  ARDUINO_TASK_CORE
+  );  
 
   // xTaskCreatePinnedToCore(
   //   TaskTempPublish
   //   ,  "TaskTempPublish"   // A name just for humans
-  //   ,  1024  // This stack size can be checked & adjusted by reading the Stack Highwater
-  //   ,  NULL
-  //   ,  0  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-  //   ,  NULL
-  //   ,  ARDUINO_TASK_CORE
-  // );  
-
-  // xTaskCreatePinnedToCore(
-  //   TaskFlowPublish
-  //   ,  "TaskFlowPublish"   // A name just for humans
-  //   ,  1024  // This stack size can be checked & adjusted by reading the Stack Highwater
+  //   ,  2048  // This stack size can be checked & adjusted by reading the Stack Highwater
   //   ,  NULL
   //   ,  0  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
   //   ,  NULL
@@ -193,9 +181,9 @@ void MQTT_connect() {
   uint8_t retries = 3;
   while ((ret = mqtt.connect()) != 0) { // connect will return 0 for connected
        Serial.println(mqtt.connectErrorString(ret));
-       Serial.println("Retrying MQTT connection in 2 seconds...");
+       Serial.println("Retrying MQTT connection in 5 seconds...");
        mqtt.disconnect();
-       delay(2000);  // wait 5 seconds
+       delay(5000);  // wait 5 seconds
        retries--;
        if (retries == 0) {
          // basically die and wait for WDT to reset me
