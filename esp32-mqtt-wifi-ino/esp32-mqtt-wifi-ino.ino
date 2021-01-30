@@ -48,7 +48,7 @@ void setupMQTT();
 void MQTT_connect();
 
 void getMQTTMessages();
-void TaskTestPublish(void *pvParameters);
+void TaskHeartbeatTestPublish(void *pvParameters);
 
 void setup() {
   Serial.begin(115200);
@@ -81,7 +81,7 @@ void loop() {
 
 }
 
-void TaskTestPublish(void *pvParameters) {
+void TaskHeartbeatTestPublish(void *pvParameters) {
   // test publish
   (void) pvParameters;
   int count = 0;
@@ -166,8 +166,8 @@ void setupMQTT() {
   mqtt.subscribe(&test_sub);
 
   xTaskCreatePinnedToCore(
-    TaskTestPublish
-    ,  "TaskTestPublish"   // A name just for humans
+    TaskHeartbeatTestPublish
+    ,  "TaskHeartbeatTestPublish"   // A name just for humans
     ,  1024  // This stack size can be checked & adjusted by reading the Stack Highwater
     ,  NULL
     ,  0  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.

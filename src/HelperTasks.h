@@ -5,10 +5,10 @@ DHT dht(DHTPIN, DHTTYPE);
 
 void extractCommandArduino(String);
 void commandArduino(String, String, String);
-void TaskTestPublish(void *pvParameters);
+void TaskHeartbeatTestPublish(void *pvParameters);
 void TaskTempPublish(void *pvParameters);
 
-void TaskTestPublish(void *pvParameters) {
+void TaskHeartbeatTestPublish(void *pvParameters) {
   // test publish
   (void) pvParameters;
   int count = 0;

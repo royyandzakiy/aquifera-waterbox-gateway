@@ -41,7 +41,7 @@ void extractCommandArduino(String);
 void commandArduino(String, String, String);
 void echo();
 void getMQTTMessages();
-void TaskTestPublish(void *pvParameters);
+void TaskHeartbeatTestPublish(void *pvParameters);
 void TaskFlowPublish(void *pvParameters);
 void TaskTempPublish(void *pvParameters);
 
@@ -104,13 +104,12 @@ void sendArduino(String str) {
 
 void setupMQTT() {
   Serial.println(F("MQTT Setup..."));
-  mqtt.subscribe(&temp_sensor_sub);
-  mqtt.subscribe(&flow_sensor_sub);
-  // mqtt.subscribe(&test_sub);
+  mqtt.subscribe(&commands_sub);
+  mqtt.subscribe(&test_sub);
 
   xTaskCreatePinnedToCore(
-    TaskTestPublish
-    ,  "TaskTestPublish"   // A name just for humans
+    TaskHeartbeatTestPublish
+    ,  "TaskHeartbeatTestPublish"   // A name just for humans
     ,  2048  // This stack size can be checked & adjusted by reading the Stack Highwater
     ,  NULL
     ,  0  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
@@ -135,17 +134,19 @@ void getMQTTMessages() {
     Serial.println("Message Incoming!");
 
     // Check from which Topic did the message come from
-    if (subscription == &flow_sensor_sub) {
-      Serial.print(F("Flow Sensor: "));
-      Serial.println((char *)flow_sensor_sub.lastread);
-    }
-    if (subscription == &temp_sensor_sub) {
-      Serial.print(F("Temp Sensor: "));
-      Serial.println((char *)temp_sensor_sub.lastread);
-    }
     if (subscription == &test_sub) {
       Serial.print(F("Test Feed: "));
       Serial.println((char *)test_sub.lastread);
+    }
+    if (subscription == &commands_sub) {
+      Serial.print(F("Commands Feed: "));
+      String msg = (char *) commands_sub.lastread;
+      Serial.println(msg);
+
+      // send to nano
+      Serial.print("Sent command to Arduino: ");
+      Serial.println(msg);
+      sendArduino(msg);
     }
   }
 }
