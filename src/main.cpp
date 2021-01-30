@@ -51,7 +51,7 @@ void setup() {
   dht.begin();
   delay(10);
 
-  Serial.println(F("Waterbox Initialize..."));
+  Serial.println(F("Waterbox-ESP32-Proxy Initialize..."));
 
   // Connect to WiFi access point.
   setupWifi();
@@ -59,7 +59,7 @@ void setup() {
   // Setup MQTT subscription
   setupMQTT();
 
-  Serial.println(F("Waterbox Setup Complete."));
+  Serial.println(F("Waterbox-ESP32-Proxy Setup Complete."));
 }
 
 void loop() {
