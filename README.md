@@ -4,6 +4,8 @@ A project made to connect to an MQTT broker through Wifi.
 
 This project is developed and used as the firmware for the Aquifera Waterbox.
 
+ESP32 communicating with MQTT Broker connected to an Arduino Nano through UART.
+
 ## How To:
 ### Preparation:
 
