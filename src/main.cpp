@@ -61,12 +61,10 @@ void setup() {
 
 void loop() {
   // Ensure the connection to the MQTT server is alive
-  MQTT_connect();
-
-  if (mqtt.connected()) {
-    // Get messages from subscribed topics
-    getMQTTMessages();
+    if (!mqtt.connected()) {
+    reconnect();
   }
+  mqtt.loop();
 
   echo();
   listenArduino();
@@ -101,6 +99,9 @@ void sendArduino(String str) {
 
 void setupMQTT() {
   Serial.println(F("MQTT Setup..."));
+  mqtt.setServer(MQTT_SERVER, 1883);
+  mqtt.setCallback(callback);
+
   mqtt.subscribe(&commands_sub);
   mqtt.subscribe(&test_sub);
 
