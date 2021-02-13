@@ -1,12 +1,10 @@
 #include <Arduino.h>
-#include "WiFi.h"
-#include "Adafruit_MQTT.h"
-#include "Adafruit_MQTT_Client.h"
+#include <WiFi.h>
+#include <PubSubClient.h>
 
 #include "credentials.h"
 #include "global.h"
 #include <HardwareSerial.h>
-#include <Adafruit_Sensor.h>
 #include "HelperTasks.h"
 
 #define ARDUINO_MAIN_CORE 0
