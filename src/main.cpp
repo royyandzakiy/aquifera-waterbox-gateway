@@ -48,7 +48,6 @@ void TaskTempPublish(void *pvParameters);
 void setup() {
   Serial.begin(9600);
   ArduinoSerial.begin(9600);
-  dht.begin();
   delay(10);
 
   Serial.println(F("Waterbox-ESP32-Proxy Initialize..."));

@@ -1,12 +1,6 @@
-#include <DHT.h>
-#define DHTPIN 4
-#define DHTTYPE DHT11
-DHT dht(DHTPIN, DHTTYPE);
-
 void extractCommandArduino(String);
 void commandArduino(String, String, String);
 void TaskHeartbeatTestPublish(void *pvParameters);
-void TaskTempPublish(void *pvParameters);
 
 void TaskHeartbeatTestPublish(void *pvParameters) {
   // test publish
@@ -25,32 +19,6 @@ void TaskHeartbeatTestPublish(void *pvParameters) {
       // Serial.println("Publish Failed! Not Connected to MQTT");
     }
     vTaskDelay(5000);
-  }
-}
-
-void TaskTempPublish(void *pvParameters) {
-  (void) pvParameters;
-  
-  for(;;) {
-    float temp_read = dht.readTemperature();
-    float hum_read = dht.readHumidity();
-    if (isnan(temp_read) || isnan(hum_read)) {
-      Serial.println(F("Failed to read from DHT sensor!"));
-    } else {
-      Serial.println("Temp: " + String(temp_read) + "; Hum: " + String(hum_read));
-    }
-    if (false) {
-    // if (mqtt.connected()) {
-      if (!temp_sensor_pub.publish(temp_read))
-        Serial.println(F("Publish Failed."));
-      else {
-        Serial.print(F("Temp Publish Success! Published: "));
-        Serial.println(temp_read);
-      }
-    } else {
-      // Serial.println("Publish Temp Failed! Not Connected to MQTT");
-    }
-    vTaskDelay(3000);
   }
 }
 
